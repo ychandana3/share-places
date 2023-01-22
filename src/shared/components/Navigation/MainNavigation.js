@@ -11,11 +11,11 @@ const MainNavigation = props => {
   return (
     <React.Fragment>
     {isDrawerClicked && <Backdrop onClick = {()=>setIsDrawerClicked(false)}/>}
-    {isDrawerClicked && <SideDrawer >
+    <SideDrawer show = {isDrawerClicked} onClick = {()=>setIsDrawerClicked(false)}>
       <nav className = 'main-navigation__drawer-nav'>
         <NavLinks/>
       </nav>
-    </SideDrawer>}
+    </SideDrawer>
     <MainHeader>
       <button className="main-navigation__menu-btn" onClick={()=>setIsDrawerClicked(true)}>
         <span />
