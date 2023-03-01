@@ -9,7 +9,6 @@ const UserItem = props => {
   return (
     <li className="user-item">
       <Card className="user-item__content">
-        {/* link is added so that when item is clicked url should also change new page should appear */}
         <Link to={`/${props.id}/places`}>
           <div className="user-item__image">
             <Avatar image={props.image} alt={props.name} />
