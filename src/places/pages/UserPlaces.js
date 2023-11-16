@@ -1,7 +1,10 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-
+import { useState, useEffect } from 'react';
 import PlaceList from '../components/PlaceList';
+import ErrorModal from '../../shared/components/UIElements/ErrorModal';
+import LoadingSpinner from '../../shared/components/UIElements/LoadingSpinner';
+import HttpHook from '../../shared/hooks/http-hook';
 
 const DUMMY_PLACES = [
   {
@@ -32,10 +35,33 @@ const DUMMY_PLACES = [
   }
 ];
 
+
 const UserPlaces = () => {
+  const [places, setPlaces] = useState();
+  const {isLoading, error, sendRequest, clearError} = HttpHook();
+  
+  useEffect(() =>{
+      const getPlaces = async() => {
+      try{
+        const responseData = await sendRequest("http://localhost:5000/api/places/user/" + userId);
+        setPlaces(responseData.places);
+      }
+      catch(err){}
+    };
+    getPlaces();  
+  },[]);
+
   const userId = useParams().userId;
-  const loadedPlaces = DUMMY_PLACES.filter(place => place.creator === userId);
-  return <PlaceList items={loadedPlaces} />;
-};
+  return(
+  <>
+  <ErrorModal error = {error} onClear = {clearError}/>
+    {isLoading && 
+    <div className="center">
+      <LoadingSpinner></LoadingSpinner>
+      </div>
+    }
+    {!isLoading && places && <PlaceList items={places} />}
+  </>);
+}
 
 export default UserPlaces;

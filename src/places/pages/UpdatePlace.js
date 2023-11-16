@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useParams } from 'react-router-dom';
-
+import { AuthContext } from '../../shared/context/auth-context';
 import Input from '../../shared/components/FormElements/Input';
 import Button from '../../shared/components/FormElements/Button';
 import Card from '../../shared/components/UIElements/Card';
@@ -10,6 +10,7 @@ import {
 } from '../../shared/util/validators';
 import { useForm } from '../../shared/hooks/form-hook';
 import './PlaceForm.css';
+import HttpHook from '../../shared/hooks/http-hook';
 
 const DUMMY_PLACES = [
   {
@@ -41,9 +42,8 @@ const DUMMY_PLACES = [
 ];
 
 const UpdatePlace = () => {
-  const [isLoading, setIsLoading] = useState(true);
   const placeId = useParams().placeId;
-
+  const auth = useContext(AuthContext);
   const [formState, inputHandler, setFormData] = useForm(
     {
       title: {
@@ -57,34 +57,53 @@ const UpdatePlace = () => {
     },
     false
   );
-
-  const identifiedPlace = DUMMY_PLACES.find(p => p.id === placeId);
-
+  const {isLoading, error, sendRequest, cancelError} = HttpHook();
+  const [place, setPlace] = useState();
   useEffect(() => {
-    if (identifiedPlace) {
-      setFormData(
-        {
-          title: {
-            value: identifiedPlace.title,
-            isValid: true
-          },
-          description: {
-            value: identifiedPlace.description,
-            isValid: true
-          }
-        },
-        true
-      );
-    }
-    setIsLoading(false);
-  }, [setFormData, identifiedPlace]);
+     const getFormData = async() =>{
 
-  const placeUpdateSubmitHandler = event => {
+      try{
+        const response = await sendRequest("http://localhost:5000/api/places/" + placeId);
+        console.log(response);
+        setFormData(
+          {
+            title: {
+              value: response.place.title,
+              isValid: true
+            },
+            description: {
+              value: response.place.description,
+              isValid: true
+            }
+          },
+          true
+        );
+        setPlace(response);
+      }
+      catch(err){}   
+    }
+    getFormData();
+  }, []);
+
+  const placeUpdateSubmitHandler = async event => {
     event.preventDefault();
+    try{
+      const responseData = await sendRequest('http://localhost:5000/api/places/' + placeId, 'POST', 
+        JSON.stringify({
+          title: formState.inputs.title.value,
+          description: formState.inputs.description.value,
+          address: formState.inputs.address.value,
+          creator: auth.userId,
+        }), 
+        {
+          "Content-Type": "application/json",
+        })
+      }
+    catch(err){};
     console.log(formState.inputs);
   };
 
-  if (!identifiedPlace) {
+  if (!place) {
     return (
       <div className="center">
         <Card>

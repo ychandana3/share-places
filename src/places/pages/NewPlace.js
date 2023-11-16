@@ -1,13 +1,17 @@
-import React from 'react';
-
+import React,{ useContext} from 'react';
+import {useHistory} from 'react-router-dom';
 import Input from '../../shared/components/FormElements/Input';
 import Button from '../../shared/components/FormElements/Button';
+import ErrorModal from '../../shared/components/UIElements/ErrorModal';
+import LoadingSpinner from '../../shared/components/UIElements/LoadingSpinner';
 import {
   VALIDATOR_REQUIRE,
   VALIDATOR_MINLENGTH
 } from '../../shared/util/validators';
 import { useForm } from '../../shared/hooks/form-hook';
 import './PlaceForm.css';
+import HttpHook from '../../shared/hooks/http-hook';
+import { AuthContext } from '../../shared/context/auth-context';
 
 const NewPlace = () => {
   const [formState, inputHandler] = useForm(
@@ -27,14 +31,32 @@ const NewPlace = () => {
     },
     false
   );
-
-  const placeSubmitHandler = event => {
+  const {isLoading, error, sendRequest, cancelError} = HttpHook();
+  const auth = useContext(AuthContext);
+  const history = useHistory();
+  const placeSubmitHandler = async event => {
     event.preventDefault();
-    console.log(formState.inputs); // send this to the backend!
+    try{
+      const responseData = await sendRequest('http://localhost:5000/api/places', 'POST', 
+      JSON.stringify({
+        title: formState.inputs.title.value,
+        description: formState.inputs.description.value,
+        address: formState.inputs.address.value,
+        creator: auth.userId,
+      }), 
+      {
+        "Content-Type": "application/json",
+      })
+    }
+    catch(err){}
+    history.push('/');
   };
 
   return (
+    <React.Fragment>
+    <ErrorModal error = {error} onClear = {cancelError}/>
     <form className="place-form" onSubmit={placeSubmitHandler}>
+      {isLoading && <LoadingSpinner asOverlay/>}
       <Input
         id="title"
         element="input"
@@ -64,6 +86,7 @@ const NewPlace = () => {
         ADD PLACE
       </Button>
     </form>
+    </React.Fragment>
   );
 };
 
